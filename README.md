@@ -1,87 +1,14 @@
-## **全景图拼接**
+# **全景图拼接**
 
-模式识别实验一 使用latex模版
+#### Harris角点检测 + SIFT/HOG描述子 + RANSAC
 
-分数占比：10%：认真对待
++ require实验要求
 
-**实验目的** 
++ code代码 
++ report_tex实验报告
++ result结果
 
-1、 熟悉 **Harris 角点检测器的原理和基本使用**
-
-2、 熟悉 **RANSAC 抽样一致方法的使用场景**
-
-3、 熟悉 **HOG 描述子的基本原理**
-
- 实验要求
-
-1、 提交实验报告，**要求有适当步骤说明和结果分析，对比**
-
-2、 将**代码**和**结果**打包提交 //提交内容：命名文件夹：code、实验报告、实验结果
-
-3、 实验可以使用现有的特征描述子实现
-
-
-
-+ ## 实验过程记录
-
-## **Harris 角点检测算法**
-
-### 算法原理：
-
-+ 通常意义上来说，角点就是极值点，即在某方面属性特别突出的点，是在某些属性上强度最大或者最小的孤立点、线段的终点。 对于图像而言，角点是指在两个或多个方向上都有较大灰度变化的像素点。相比于边缘和平坦区域，角点具有更强的特殊性和唯一性，因此在图像特征提取、目标识别、图像匹配等任务中起着重要的作用。
-
-+ 关于角点的具体描述可以有几种：
-
-	+ 一阶导数(即灰度的梯度)的局部最大所对应的像素点；
-	+ 两条及两条以上边缘的交点；
-	+ 图像中梯度值和梯度方向的变化速率都很高的点；
-	+ 角点处的一阶导数最大，二阶导数为零，指示物体边缘变化不连续的方向。
-
-+ 角点检测算法基本思想是使用一个固定窗口（取某个像素的一个邻域窗口）在图像上进行任意方向上的滑动，比较滑动前与滑动后两种情况，窗口中的像素灰度变化程度，如果存在任意方向上的滑动，都有着较大灰度变化，那么我们可以认为该窗口中存在角点。
-
-+ #### 算法流程简述：
-
-+ **（1）定义角点响应函数**：
-
-+ 设图像上某点的坐标为$(x, y)$，灰度函数为$I(x, y)$。考虑在该点附近移动一个小的位移向量$(u, v)$，灰度变化可以表示为：
-
-	$$E(u, v) = \sum_{x',y'} w(x',y') [I(x'+u, y'+v) - I(x', y')]^2$$
-
-	其中，$w(x',y')$是一个窗口函数，通常为高斯窗口，用于权衡不同位置的灰度变化。如果窗口中心点是角点时，移动前与移动后，该点在灰度变化贡献最大；而离窗口中心(角点)较远的点，这些点的灰度变化几近平缓。
-
-	**（2）计算自相关矩阵**：
-
-对于窗口内的灰度变化，我们可以将$E(u, v)$在$(u, v) = (0, 0)$处进行泰勒展开：
-
-$$E(u, v) \approx E(0, 0) + [u, v]M[u, v]^T$$
-
-其中，$M$为自相关矩阵：
-
-$$M = \begin{bmatrix} \sum w(x',y') I_x^2 & \sum w(x',y') I_x I_y \\ \sum w(x',y') I_x I_y & \sum w(x',y') I_y^2 \end{bmatrix}$$
-
-其中，$I_x$和$I_y$分别为图像在$x$和$y$方向的梯度。
-
-**（3）定义角点响应函数**：
-
-定义角点响应函数$R$为$R = \det(M) - k \cdot \text{trace}^2(M)$，其中$k$是一个常数，一般取0.04到0.06。
-
-det(M)=λ1λ2���(�)=λ1λ2
-
-trace(M)=λ1+λ2
-
-k�是一个指定值，这是一个经验参数，需要实验确定它的合适大小，通常它的值在0.04和0.06之间,它的存在只是调节函数的形状而已。
-
-**（4）****非极大值抑制**：
-
-对角点响应函数进行非极大值抑制，保留局部最大值点作为最终的角点。
-
-
-
-
-
-
-
-### 实现过程
+### Harris角点检测
 
 + 由于Harris角点检测算法只能处理灰度图像，因此需要将图像转换为灰度图像
 
@@ -93,9 +20,10 @@ gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 + 使用Sobel算子计算图像的梯度，得到图像在x和y方向上的梯度
 
-	    dx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3) 
-	    dy = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
-	    
+```
+dx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3) 
+dy = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
+```
 
 + 计算自相关矩阵 M 并 计算角点响应函数 R
 
@@ -122,21 +50,17 @@ for i in range(img.shape[0]):
             cv2.circle(corner_img, (j, i), 1, (255,0,255), -1)
 ```
 
+<img src="results/sudoku_keypoints.png" style="zoom:50%;" />
 
+### **关键点描述与匹配**
 
-
-
-
-
-## **关键点描述与匹配**
-
-### SIFT特征和匹配
+#### SIFT特征和匹配
 
 + SIFT特征算法的原理已经在 \ref{} 一节详细阐述，对SIFT特征的计算可以通过opencv库的指定方法简单实现。使用Harris角点坐标创建cv2.KeyPoint对象，把关键点和灰度图传入sift.compute方法可以实现SIFT描述子的计算。
 
 + 在邻域大小为2、Sobel算子孔径大小为3、k为0.04的角点参数设置下，以0.01倍最大响应值为阈值，可以看出每幅图片计算了约四千到五千个角点。每个角点以半径为5的领域计算了128维的SIFT特征向量。
 
-<img src="/Users/lbyyds/Desktop/markdown/typora文件统一使用的图片/r1_副本.png" style="zoom:50%;" />
+<img src="https://cdn.jsdelivr.net/gh/02lb/img_picGo@main/img_data/r1_%E5%89%AF%E6%9C%AC.png" style="zoom:50%;" />
 
 + 主要的代码流程如下：
 
@@ -181,15 +105,7 @@ def sift_feature_extraction(image_path, corner_location):
     img_matches = cv2.drawMatches(img1, keypoints1, img2, keypoints2, matches, None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 ```
 
-
-
-![](/Users/lbyyds/Desktop/markdown/typora文件统一使用的图片/uttower_match_副本.png)
-
-![uttower_match_100](/Users/lbyyds/Desktop/markdown/typora文件统一使用的图片/uttower_match_100.png)
-
-![uttower_match_10](/Users/lbyyds/Desktop/markdown/typora文件统一使用的图片/uttower_match_10.png)
-
-
+<img src="results/uttower_match_sift.png" style="zoom:67%;" />
 
 
 
@@ -206,7 +122,7 @@ des_hog = hog.compute(gray, locations=corner_location_tuple).reshape(corner_loca
 
 + HOG特征提取的结果如下图所示，可以看出对于每个角点提取了3780个特征向量；由于HOG特征向量在本实验的精度不高，实验发现有许多向量为纯零向量。
 
-<img src="/Users/lbyyds/Desktop/markdown/typora文件统一使用的图片/截屏2024-05-06 10.57.08.png" style="zoom:50%;" />
+<img src="https://cdn.jsdelivr.net/gh/02lb/img_picGo@main/img_data/%E6%88%AA%E5%B1%8F2024-05-06%2010.57.08.png" style="zoom:50%;" />
 
 
 
@@ -225,7 +141,7 @@ des_hog = hog.compute(gray, locations=corner_location_tuple).reshape(corner_loca
 
 + 使用如上方法可以对HOG特征筛选数十个匹配点对，对于匹配结果可以可视化如下。
 
-![](/Users/lbyyds/Desktop/markdown/typora文件统一使用的图片/uttower_match_hog_副本.png)
+<img src="results/uttower_match_hog.png" alt="uttower_match_hog" style="zoom:67%;" />
 
 
 
@@ -254,13 +170,19 @@ des_hog = hog.compute(gray, locations=corner_location_tuple).reshape(corner_loca
     result[-y_min:h1 - y_min, -x_min:w1 - x_min] = image1
 ```
 
-+ 对于SIFT和HOG两种不同的特征计算和匹配得到的效果如下图所示，其中SIFT为图 \ref{}，HOG为图 \ref{}
++ 对于SIFT和HOG两种不同的特征计算和匹配得到的效果如下图所示:
 
-![](/Users/lbyyds/Desktop/markdown/typora文件统一使用的图片/uttower_panorama_sift.png)
+#### 基于SIFT描述子拼接效果：
 
-![uttower_panorama_hog](/Users/lbyyds/Desktop/markdown/typora文件统一使用的图片/uttower_panorama_hog.png)
+<img src="results/uttower_stitching_hog.png" style="zoom: 50%;" />
 
-+ 效果分析：可以明显看出使用SIFT特征的效果要优于HOG特征，推测原因可能有以下几点：
+#### 基于HOG描述子拼接效果：
+
+<img src="/Users/LocalProject/panorama-stitching/results/uttower_stitching_sift.png" alt="uttower_stitching_sift" style="zoom:67%;" />
+
+
+
++ **效果分析：可以明显看出使用SIFT特征的效果要优于HOG特征，推测原因可能有以下几点：**
 	1. SIFT描述子具有更多的匹配点对。本实验中，由于SIFT特征使用的是一对一匹配，求出并使用了上千个数据点对。但是由于HOG特征向量具有稀疏性（需要为全零向量），只能使用knn进行匹配，在95%的最优阈值下只能找到几十个匹配点对。毫无疑问更多的点对具有更高的精度。
 	2. SIFT 描述子具有很强的几何不变性和光照不变性，能够更好地描述图像的局部特征，对图像旋转、缩放和视角变化具有较好的鲁棒性，因此在匹配过程中更容易找到正确的对应关系；HOG描述子受到亮度影响较大，并且在本实验中没有进行Gamma矫正或者直方图均衡化等预处理操作。
 
@@ -273,16 +195,18 @@ des_hog = hog.compute(gray, locations=corner_location_tuple).reshape(corner_loca
 + 对于四幅图像的拼接可以采用递归的方式，即使用图片n-1和图片n的拼接结果和图片n+1进行操作。考虑到图片顺序的问题，可以使用图片之间的match点对的数量来判断拼接两张图片是否合理，即在匹配点对数量较少时考虑到图片可能不直接相连来避免此拼接顺序。
 + 下面显示了实验要求中的四幅图像递归拼接的效果：
 
+<img src="results/yosemite_stitching.png" style="zoom:67%;" />
 
 
 
 
 
 
-参考文献：
 
 
 
-角点检测：https://www.cnblogs.com/zyly/p/9508131.html#_label3
+### 参考资料：
 
-Umich EECS 442 (Winter 2018) Homework 4：https://github.com/xuwenzhe/EECS442-Image-Stitching/tree/master
+[角点检测：](https://www.cnblogs.com/zyly/p/9508131.html#_label3)
+
+[Umich EECS 442 (Winter 2018) Homework 4：](https://github.com/xuwenzhe/EECS442-Image-Stitching/tree/master)
