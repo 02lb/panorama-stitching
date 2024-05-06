@@ -2,11 +2,11 @@
 
 #### Harris角点检测 + SIFT/HOG描述子 + RANSAC
 
-+ require实验要求
++ require____实验要求
 
-+ code代码 
-+ report_tex实验报告
-+ result结果
++ code____代码 
++ report_tex____实验报告
++ result____结果
 
 ### Harris角点检测
 
@@ -174,11 +174,11 @@ des_hog = hog.compute(gray, locations=corner_location_tuple).reshape(corner_loca
 
 #### 基于SIFT描述子拼接效果：
 
-<img src="results/uttower_stitching_hog.png" style="zoom: 50%;" />
+<img src="results/uttower_stitching_sift.png" style="zoom: 67%;" />
 
 #### 基于HOG描述子拼接效果：
 
-<img src="/Users/LocalProject/panorama-stitching/results/uttower_stitching_sift.png" alt="uttower_stitching_sift" style="zoom:67%;" />
+<img src="results/uttower_stitching_hog.png" alt="uttower_stitching_sift" style="zoom: 50%;" />
 
 
 
